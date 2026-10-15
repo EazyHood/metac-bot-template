@@ -754,9 +754,14 @@ if __name__ == "__main__":
     # summary printers below.
     client = MetaculusClient()
     if run_mode == "tournament":
+        # poetry.lock pins forecasting-tools 0.2.92, whose
+        # CURRENT_AI_COMPETITION_ID is still the summer 2026 tournament (33022),
+        # so the fall one is named explicitly. Drop this once the lock moves to
+        # 0.3.x, where the constant is FE_FALL_2026_ID = 33121.
+        fall_futureeval_2026_id = 33121
         seasonal_tournament_reports = asyncio.run(
             template_bot.forecast_on_tournament(
-                client.CURRENT_AI_COMPETITION_ID, return_exceptions=True
+                fall_futureeval_2026_id, return_exceptions=True
             )
         )
         minibench_reports = asyncio.run(
