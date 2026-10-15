@@ -2,8 +2,8 @@ name: Forecast on Metaculus Cup
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 */2 * *" # runs at midnight every 2 days
+  # Schedule off: the free OpenRouter quota (50 requests/day) is kept for the
+  # prize tournament and MiniBench. Run this one by hand if wanted.
 
 # Add concurrency group to prevent parallel runs
 concurrency:
