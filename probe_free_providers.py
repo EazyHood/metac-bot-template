@@ -62,8 +62,11 @@ def probe_github_models(token: str) -> None:
         "Content-Type": "application/json",
     }
     status, text, seconds = call("https://models.github.ai/catalog/models", auth)
-    if status == 200:
-        catalog = json.loads(text)
+    try:
+        catalog = json.loads(text) if status == 200 else None
+    except json.JSONDecodeError:
+        catalog = None
+    if isinstance(catalog, list):
         print(f"OK   github-models catalog | {len(catalog)} models")
         for model in catalog:
             print(f"     {model.get('id')} | tier={model.get('rate_limit_tier')} | {model.get('publisher')}")
