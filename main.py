@@ -706,12 +706,26 @@ if __name__ == "__main__":
 
     # Configure the bot. Pinned to OpenRouter's free (`:free`) models, which
     # are capped at 50 requests/day and 20/minute per account. Each question
-    # costs 2 calls per prediction (forecast + parse), so 3 predictions keep it
-    # near 8 questions/day. Research and its summary are off: without a search
+    # costs 2 calls per prediction (forecast + parse), so 2 predictions keep it
+    # near 12 questions/day. Research and its summary are off: without a search
     # API key an LLM-only research pass costs calls but adds no fresh information.
+    # Free models get saturated upstream (probe of 2026-10-15: both Gemma 4 and
+    # Laguna returned 429), so each role carries an OpenRouter fallback list.
+    def free_llm(primary: str, *fallbacks: str) -> GeneralLlm:
+        return GeneralLlm(
+            model=f"openrouter/{primary}",
+            temperature=0.3,
+            timeout=180,
+            allowed_tries=2,
+            extra_body={"models": [primary, *fallbacks]},
+        )
+
+    nemotron_ultra = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    nemotron_super = "nvidia/nemotron-3-super-120b-a12b:free"
+    dots = "dots-studio/dots-3-note-preview:free"
     template_bot = FallTemplateBot2026(
         research_reports_per_question=1,
-        predictions_per_research_report=3,
+        predictions_per_research_report=2,
         use_research_summary_to_forecast=False,
         enable_summarize_research=False,
         publish_reports_to_metaculus=publish_to_metaculus,
@@ -719,15 +733,10 @@ if __name__ == "__main__":
         skip_previously_forecasted_questions=True,
         extra_metadata_in_explanation=True,
         llms={
-            "default": GeneralLlm(
-                model="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
-                temperature=0.3,
-                timeout=180,
-                allowed_tries=2,
-            ),
-            "summarizer": "openrouter/google/gemma-4-31b-it:free",
+            "default": free_llm(nemotron_ultra, nemotron_super, dots),
+            "summarizer": free_llm(nemotron_super, nemotron_ultra, dots),
             "researcher": "no_research",
-            "parser": "openrouter/google/gemma-4-31b-it:free",
+            "parser": free_llm(nemotron_super, nemotron_ultra, dots),
         },
     )
 
