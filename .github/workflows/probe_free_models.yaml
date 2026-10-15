@@ -2,6 +2,15 @@ name: Probe free models
 
 on:
   workflow_dispatch:
+    inputs:
+      openrouter:
+        description: "Also probe the OpenRouter free models (costs ~8 of the 50 daily requests)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  models: read
 
 jobs:
   probe:
@@ -11,7 +20,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Send one request to each candidate free model
+      - name: Send one request to each candidate free OpenRouter model
+        if: inputs.openrouter
         run: python probe_free_models.py
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - name: Check the Metaculus proxy and GitHub Models
+        if: always()
+        run: python probe_free_providers.py
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
