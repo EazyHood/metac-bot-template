@@ -49,7 +49,8 @@ def main() -> None:
     key = os.environ["OPENROUTER_API_KEY"]
     for model in CANDIDATES:
         status, payload, seconds = post(model, key)
-        if status == 200 and isinstance(payload, dict):
+        # OpenRouter can answer HTTP 200 with an {"error": ...} body and no choices.
+        if status == 200 and isinstance(payload, dict) and payload.get("choices"):
             provider = payload.get("provider", "?")
             text = (payload["choices"][0]["message"].get("content") or "").strip()[:40]
             print(f"OK   {model} | {seconds:5.1f} s | {provider} | {text!r}")
